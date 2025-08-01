@@ -38,17 +38,17 @@
                 <label class="form-label">Pekerja</label>
                 <div class="row">
                     @foreach($workers as $worker)
-                    @if($worker->role !== 'mandor')
-                    <!-- Hanya tampilkan jika bukan mandor -->
                     <div class="col-md-4">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="worker_{{ $worker->id }}" name="workers[]" value="{{ $worker->id }}" {{ $project->workers->contains($worker->id) ? 'checked' : '' }}>
                             <label class="form-check-label" for="worker_{{ $worker->id }}">
-                                {{ $worker->name }} ({{ ucfirst($worker->role) }})
+                                {{ $worker->name }}
+                                <span class="badge bg-{{ $worker->role === 'mandor' ? 'primary' : ($worker->role === 'peladen' ? 'success' : 'secondary') }}">
+                                    {{ ucfirst($worker->role) }}
+                                </span>
                             </label>
                         </div>
                     </div>
-                    @endif
                     @endforeach
                 </div>
             </div>

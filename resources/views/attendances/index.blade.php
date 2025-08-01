@@ -21,22 +21,31 @@
             <table class="table table-sm table-bordered">
                 <thead>
                     <tr>
+                        <th>Tanggal</th>
                         <th>Nama Pekerja</th>
-                        <th>Check In</th>
-                        <th>Check Out</th>
+                        <th>Status</th>
                         <th>Jam Lembur</th>
-                        <th>Hitung 2 Hari</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
+                    @foreach($attendances as $date => $dateAttendances)
                     @foreach($dateAttendances as $attendance)
                     <tr>
+                        <td>{{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}</td>
                         <td>{{ $attendance->worker->name }}</td>
-                        <td>{{ $attendance->check_in }}</td>
-                        <td>{{ $attendance->check_out }}</td>
+                        <td>
+                            @if($attendance->status === 'hadir')
+                            1 Hari
+                            @elseif($attendance->status === 'setengah_hari')
+                            Setengah Hari
+                            @elseif($attendance->status === '2_hari_kerja')
+                            2 Hari 
+                            @else
+                            Tidak Hadir
+                            @endif
+                        </td>
                         <td>{{ $attendance->overtime_hours }} jam</td>
-                        <td>{{ $attendance->count_as_two_days ? 'Ya' : 'Tidak' }}</td>
                         <td>
                             <a href="{{ route('projects.attendances.edit', [$project, $attendance]) }}" class="btn btn-sm btn-warning">Edit</a>
                             <form action="{{ route('projects.attendances.destroy', [$project, $attendance]) }}" method="POST" class="d-inline">
@@ -46,6 +55,7 @@
                             </form>
                         </td>
                     </tr>
+                    @endforeach
                     @endforeach
                 </tbody>
             </table>

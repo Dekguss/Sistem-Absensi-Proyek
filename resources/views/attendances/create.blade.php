@@ -12,32 +12,80 @@
                 <label for="date" class="form-label">Tanggal</label>
                 <input type="date" class="form-control" id="date" name="date" required>
             </div>
+
             <div class="mb-3">
-                <label for="worker_id" class="form-label">Pekerja</label>
-                <select class="form-select" id="worker_id" name="worker_id" required>
-                    <option value="">Pilih Pekerja</option>
-                    @foreach($workers as $worker)
-                    <option value="{{ $worker->id }}">{{ $worker->name }} ({{ ucfirst($worker->role) }})</option>
-                    @endforeach
-                </select>
+                <h5>Daftar Pekerja</h5>
+                @php
+                    $groupedWorkers = $workers->groupBy('role');
+                @endphp
+
+                @foreach($groupedWorkers as $role => $workersGroup)
+                    <div class="mb-4">
+                        <h6 class="mt-3">{{ ucfirst($role) }}</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nama</th>
+                                        <th class="text-center">Status</th>
+                                        <th class="text-center">Lembur (jam)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($workersGroup as $index => $worker)
+                                        <tr>
+                                            <td>
+                                                <input type="hidden" name="workers[{{ $index }}][id]" value="{{ $worker->id }}">
+                                                {{ $worker->name }}
+                                            </td>
+                                            <td>
+                                                <select name="workers[{{ $index }}][status]" class="form-select" required>
+                                                    <option value="hadir">Hadir (1 hari)</option>
+                                                    <option value="setengah_hari">Setengah Hari</option>
+                                                    <option value="tidak_hadir">Tidak Hadir</option>
+                                                    <option value="2_hari_kerja">2 Hari Kerja</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input type="number" 
+                                                       name="workers[{{ $index }}][overtime_hours]" 
+                                                       class="form-control" 
+                                                       min="0" 
+                                                       value="0"
+                                                       style="width: 80px;">
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endforeach
             </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="check_in" class="form-label">Check In</label>
-                    <input type="time" class="form-control" id="check_in" name="check_in" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="check_out" class="form-label">Check Out</label>
-                    <input type="time" class="form-control" id="check_out" name="check_out" required>
-                </div>
+
+            <div class="d-flex justify-content-between">
+                <a href="{{ route('projects.attendances.index', $project) }}" class="btn btn-secondary">Batal</a>
+                <button type="submit" class="btn btn-primary">Simpan Semua Absensi</button>
             </div>
-            <div class="mb-3">
-                <label for="notes" class="form-label">Catatan</label>
-                <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Simpan</button>
-            <a href="{{ route('projects.attendances.index', $project) }}" class="btn btn-secondary">Batal</a>
         </form>
     </div>
 </div>
+
+@push('styles')
+<style>
+    .table th, .table td {
+        vertical-align: middle;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+    // Set default date to today
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').value = today;
+    });
+</script>
+@endpush
 @endsection

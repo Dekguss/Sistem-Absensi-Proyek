@@ -99,9 +99,10 @@ class ProjectController extends Controller
                       ->orWhere('id', $project->mandor_id);
             })
             ->get();
-    
-        // Ambil daftar pekerja (tukang) yang belum terdaftar di proyek manapun ATAU sudah terdaftar di proyek ini
-        $workers = Worker::where('role', 'tukang')
+
+        // Ambil daftar pekerja (semua role kecuali mandor) yang belum terdaftar di proyek manapun
+        // ATAU yang sudah terdaftar di proyek ini
+        $workers = Worker::where('role', '!=', 'mandor')
             ->where(function($query) use ($project) {
                 $query->whereDoesntHave('projects')
                       ->orWhereHas('projects', function($q) use ($project) {
@@ -109,7 +110,10 @@ class ProjectController extends Controller
                       });
             })
             ->get();
-    
+
+        // Load relasi workers untuk proyek ini
+        $project->load('workers');
+        
         return view('projects.edit', compact('project', 'mandor', 'workers'));
     }
 

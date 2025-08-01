@@ -54,33 +54,16 @@ class AttendanceController extends Controller
         $request->validate([
             'date' => 'required|date',
             'worker_id' => 'required|exists:workers,id',
-            'check_in' => 'required|date_format:H:i',
-            'check_out' => 'required|date_format:H:i|after:check_in',
+            'status' => 'required|in:hadir,tidak_hadir,setengah_hari',
+            'overtime_hours' => 'nullable|integer|min:0',
         ]);
-
-        $checkOut = Carbon::createFromFormat('H:i', $request->check_out);
-        $overtimeHours = 0;
-        $countAsTwoDays = false;
-
-        // Hitung lembur jika check out setelah jam 16:00
-        if ($checkOut->gt(Carbon::createFromTime(16, 0))) {
-            $overtimeHours = $checkOut->diffInHours(Carbon::createFromTime(16, 0));
-
-            // Jika check out setelah jam 22:00, hitung sebagai 2 hari kerja
-            if ($checkOut->gt(Carbon::createFromTime(22, 0))) {
-                $countAsTwoDays = true;
-            }
-        }
 
         Attendance::create([
             'project_id' => $project->id,
             'worker_id' => $request->worker_id,
             'date' => $request->date,
-            'check_in' => $request->check_in,
-            'check_out' => $request->check_out,
-            'overtime_hours' => $overtimeHours,
-            'count_as_two_days' => $countAsTwoDays,
-            'notes' => $request->notes,
+            'status' => $request->status,
+            'overtime_hours' => $request->overtime_hours ?? 0,
         ]);
 
         return redirect()
@@ -123,30 +106,15 @@ class AttendanceController extends Controller
         $request->validate([
             'date' => 'required|date',
             'worker_id' => 'required|exists:workers,id',
-            'check_in' => 'required|date_format:H:i',
-            'check_out' => 'required|date_format:H:i|after:check_in',
+            'status' => 'required|in:hadir,tidak_hadir,setengah_hari',
+            'overtime_hours' => 'nullable|integer|min:0',
         ]);
-
-        $checkOut = Carbon::createFromFormat('H:i', $request->check_out);
-        $overtimeHours = 0;
-        $countAsTwoDays = false;
-
-        if ($checkOut->gt(Carbon::createFromTime(16, 0))) {
-            $overtimeHours = $checkOut->diffInHours(Carbon::createFromTime(16, 0));
-
-            if ($checkOut->gt(Carbon::createFromTime(22, 0))) {
-                $countAsTwoDays = true;
-            }
-        }
 
         $attendance->update([
             'worker_id' => $request->worker_id,
             'date' => $request->date,
-            'check_in' => $request->check_in,
-            'check_out' => $request->check_out,
-            'overtime_hours' => $overtimeHours,
-            'count_as_two_days' => $countAsTwoDays,
-            'notes' => $request->notes,
+            'status' => $request->status,
+            'overtime_hours' => $request->overtime_hours ?? 0,
         ]);
 
         return redirect()
@@ -168,15 +136,30 @@ class AttendanceController extends Controller
             ->with('success', 'Absensi berhasil dihapus');
     }
 
-    public function report(Project $project)
+    public function report(Request $request, Project $project)
     {
+        // Set default date range to current week
+        $startDate = $request->input('start_date') 
+            ? Carbon::parse($request->input('start_date'))
+            : now()->startOfWeek();
+            
+        $endDate = $request->input('end_date')
+            ? Carbon::parse($request->input('end_date'))
+            : now()->endOfWeek();
+
         $attendances = Attendance::with('worker')
             ->where('project_id', $project->id)
-            ->orderBy('date', 'desc')
+            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+            ->orderBy('date')
             ->get()
-            ->groupBy('date');
+            ->groupBy('worker_id');
 
-        return view('attendances.report', compact('project', 'attendances'));
+        return view('attendances.report', compact(
+            'project', 
+            'attendances',
+            'startDate',
+            'endDate'
+        ));
     }
 
     public function export(Project $project)
@@ -197,7 +180,6 @@ class AttendanceController extends Controller
                     'Nama' => $item->worker->name,
                     'Jabatan' => ucfirst($item->worker->role),
                     'Status' => $item->status,
-                    'Keterangan' => $item->notes ?? '-',
                     'Gaji Harian' => 'Rp ' . number_format($item->worker->daily_salary, 0, ',', '.'),
                 ];
             });

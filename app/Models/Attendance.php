@@ -11,12 +11,11 @@ class Attendance extends Model
 
     protected $fillable = [
         'project_id', 'worker_id', 'date', 
-        'check_in', 'check_out', 'overtime_hours', 
-        'count_as_two_days', 'notes'
+        'status', 'overtime_hours',
     ];
     
     protected $casts = [
-        'date' => 'date',  // Pastikan ini ada
+        'date' => 'date',
     ];
 
 
