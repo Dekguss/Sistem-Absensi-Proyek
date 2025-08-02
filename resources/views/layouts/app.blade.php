@@ -18,7 +18,7 @@
         .nav-link.active {
             font-weight: bold;
         }
-
+        
     </style>
     @stack('styles')
 </head>
@@ -34,8 +34,8 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
+            <div class="collapse navbar-collapse pt-3 pt-md-0" id="navbarNav">
+                <ul class="navbar-nav mx-auto gap-3">
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
                     </li>
@@ -58,7 +58,7 @@
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="ri-user-line me-1"></i> ADMIN
+                            <i class="ri-user-line me-1"></i> Admin
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#">Profil</a></li>
@@ -83,7 +83,7 @@
     </nav>
 
     <div class="content-wrapper">
-        <div class="container-fluid mt-4">
+        <div class="container mt-4">
             @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show">
                 {{ session('success') }}
