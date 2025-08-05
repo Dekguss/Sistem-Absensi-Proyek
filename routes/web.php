@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WorkerController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\HomeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,14 +17,12 @@ use App\Http\Controllers\AttendanceController;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-
+Route::get('/', [HomeController::class, 'index'])->name('dashboard');
 
 Route::resource('workers', WorkerController::class);
 Route::resource('projects', ProjectController::class);
+
+// Route::get('/dashboard', [App\Http\Controllers\HomeController::class, 'index'])->name('dashboard');
 
 Route::prefix('projects/{project}/attendances')->group(function () {
     Route::get('/', [AttendanceController::class, 'index'])->name('projects.attendances.index');
@@ -37,5 +36,3 @@ Route::prefix('projects/{project}/attendances')->group(function () {
 });
 
 Auth::routes();
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

@@ -32,7 +32,7 @@ class ProjectController extends Controller
             ->get();
     
         // Ambil daftar pekerja (tukang) yang belum terdaftar di proyek manapun
-        $workers = Worker::where('role', 'tukang')
+        $workers = Worker::whereIn('role', ['tukang', 'peladen'])   
             ->whereDoesntHave('projects')
             ->get();
     
@@ -54,15 +54,19 @@ class ProjectController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'mandor_id' => 'required|exists:workers,id',
             'workers' => 'required|array',
-            'workers.*' => 'exists:workers,id'
+            'workers.*' => 'exists:workers,id',
+            'location' => 'required',
+            'status' => 'required',
         ]);
 
         $project = Project::create($request->only([
             'name',
             'description',
             'start_date',
-            'end_date',
+            'end_date', 
             'mandor_id',
+            'location',
+            'status',
         ]));
 
         $project->workers()->attach($request->workers);
@@ -133,7 +137,8 @@ class ProjectController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'mandor_id' => 'required|exists:workers,id',
             'workers' => 'required|array',
-            'workers.*' => 'exists:workers,id'
+            'workers.*' => 'exists:workers,id',
+            'status' => 'required',
         ]);
 
         $project->update($request->only([
@@ -142,6 +147,7 @@ class ProjectController extends Controller
             'start_date',
             'end_date',
             'mandor_id',
+            'status',
         ]));
 
         $project->workers()->sync($request->workers);

@@ -37,7 +37,7 @@
             <div class="collapse navbar-collapse pt-3 pt-md-0" id="navbarNav">
                 <ul class="navbar-nav mx-auto gap-3">
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
+                        <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('workers*') ? 'active' : '' }}" href="{{ route('workers.index') }}">Pekerja</a>

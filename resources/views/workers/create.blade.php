@@ -18,12 +18,12 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8">
+                <div class="mb-4">
+                    <h1 class="h3 fw-bold text-dark mb-2">Tambah Pekerja Baru</h1>
+                    <p class="text-muted mb-0">Lengkapi form di bawah untuk menambahkan pekerja baru</p>
+                </div>
                 <div class="card shadow-sm border-1">
                     <div class="card-body p-4 p-md-5">
-                        <div class="mb-4">
-                            <h1 class="h3 fw-bold text-dark mb-2">Tambah Pekerja Baru</h1>
-                            <p class="text-muted mb-0">Lengkapi form di bawah untuk menambahkan pekerja baru</p>
-                        </div>
                         <form class="needs-validation" novalidate action="{{ route('workers.store') }}" method="POST">
                             @csrf
                             <div class="mb-4">

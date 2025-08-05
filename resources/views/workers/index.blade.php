@@ -78,17 +78,17 @@
                             @php
                                 $roleConfig = [
                                     'mandor' => [
-                                        'icon' => 'ri-user-3-fill',
+                                        'icon' => 'ri-user-3-line',
                                         'color' => '#4e73df',
                                         'bg' => '#e8f0fe'
                                     ],
                                     'tukang' => [
-                                        'icon' => 'ri-hammer-fill',
+                                        'icon' => 'ri-hammer-line',
                                         'color' => '#1cc88a',
                                         'bg' => '#e6f7f0'
                                     ],
                                     'peladen' => [
-                                        'icon' => 'ri-shield-fill',
+                                        'icon' => 'ri-hammer-line',
                                         'color' => '#f6c23e',
                                         'bg' => '#fef9e7'
                                     ]

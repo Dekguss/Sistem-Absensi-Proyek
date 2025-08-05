@@ -12,14 +12,17 @@ class Project extends Model
     protected $fillable = [
         'name',
         'description',
+        'location',
         'start_date',
         'end_date',
         'mandor_id',
+        'status',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'status' => 'string',
     ];
 
     public function mandor()
