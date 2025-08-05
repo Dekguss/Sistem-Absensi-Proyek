@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Project;
+use App\Models\Worker;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -21,15 +22,42 @@ class AttendanceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Project $project)
+    public function index(Request $request)
     {
-        $attendances = Attendance::with('worker')
-            ->where('project_id', $project->id)
-            ->orderBy('date', 'desc')
-            ->get()
-            ->groupBy('date');
+        $projects = Project::all();
+        $workers = Worker::all();
 
-        return view('attendances.index', compact('project', 'attendances'));
+        $query = Attendance::with('worker', 'project')
+            ->latest();
+
+        // Filter by project
+        if ($request->has('project_id') && $request->project_id != '') {
+            $query->where('project_id', $request->project_id);
+        }
+
+        // Filter by date
+        if ($request->has('date') && $request->date != '') {
+            $query->whereDate('date', $request->date);
+        }
+
+        // Filter by status
+        if ($request->has('status') && $request->status != 'all') {
+            $statusMap = [
+                '1' => '1_hari',
+                '0.5' => 'setengah_hari',
+                '2' => '2_hari',
+                '1.5' => '1.5_hari',
+                '0' => 'tidak_bekerja'
+            ];
+
+            if (isset($statusMap[$request->status])) {
+                $query->where('status', $statusMap[$request->status]);
+            }
+        }
+
+        $attendances = $query->get();
+
+        return view('attendances.index', compact('projects', 'attendances', 'workers'));
     }
 
     /**
@@ -37,10 +65,26 @@ class AttendanceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create(Project $project)
+    public function create()
     {
-        $workers = $project->workers;
-        return view('attendances.create', compact('project', 'workers'));
+        $projects = Project::all();
+        $selectedProjectId = request('project_id');
+
+        $workers = collect();
+
+        if ($selectedProjectId) {
+            $project = Project::with('mandor')->findOrFail($selectedProjectId);
+            $workers = $project->workers;
+
+            // Add mandor to the workers collection if exists
+            if ($project->mandor) {
+                $mandor = $project->mandor;
+                $mandor->role = 'mandor';  // Ensure role is set
+                $workers->prepend($mandor);  // Add mandor at the beginning
+            }
+        }
+
+        return view('attendances.create', compact('projects', 'workers'));
     }
 
     /**
@@ -49,26 +93,52 @@ class AttendanceController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, Project $project)
+    public function store(Request $request)
     {
         $request->validate([
-            'date' => 'required|date',
-            'worker_id' => 'required|exists:workers,id',
-            'status' => 'required|in:hadir,tidak_hadir,setengah_hari',
-            'overtime_hours' => 'nullable|integer|min:0',
+            'project_id' => 'required|exists:projects,id',
+            'attendance_date' => 'required|date',
+            'attendance' => 'required|array',
+            'attendance.*' => 'required|in:1_hari,setengah_hari,1.5_hari,tidak_bekerja,2_hari',
+            'overtime' => 'required|array',
+            'overtime.*' => 'required|in:0,1,2,3,4,5'
         ]);
 
-        Attendance::create([
-            'project_id' => $project->id,
-            'worker_id' => $request->worker_id,
-            'date' => $request->date,
-            'status' => $request->status,
-            'overtime_hours' => $request->overtime_hours ?? 0,
-        ]);
+        $projectId = $request->project_id;
+        $attendanceDate = $request->attendance_date;
+
+        // Delete existing attendance records for this project and date to prevent duplicates
+        Attendance::where('project_id', $projectId)
+            ->whereDate('date', $attendanceDate)
+            ->delete();
+
+        $attendanceData = [];
+
+        foreach ($request->attendance as $workerId => $status) {
+            $overtime = $request->overtime[$workerId] ?? 0;
+
+            $attendanceData[] = [
+                'project_id' => $projectId,
+                'worker_id' => $workerId,
+                'date' => $attendanceDate,
+                'status' => $status,
+                'overtime_hours' => $overtime,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        // Insert all records at once for better performance
+        if (!empty($attendanceData)) {
+            Attendance::insert($attendanceData);
+        }
 
         return redirect()
-            ->route('projects.attendances.index', $project)
-            ->with('success', 'Absensi berhasil dicatat');
+            ->route('attendances.create', [
+                'project_id' => $projectId,
+                'attendance_date' => $attendanceDate
+            ])
+            ->with('success', 'Data absensi berhasil disimpan');
     }
 
     /**
@@ -101,25 +171,21 @@ class AttendanceController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Project $project, Attendance $attendance)
+    public function update(Request $request, $id)
     {
         $request->validate([
-            'date' => 'required|date',
-            'worker_id' => 'required|exists:workers,id',
-            'status' => 'required|in:hadir,tidak_hadir,setengah_hari',
-            'overtime_hours' => 'nullable|integer|min:0',
+            'status' => 'required|in:1_hari,setengah_hari,1.5_hari,tidak_bekerja,2_hari',
+            'overtime_hours' => 'nullable|numeric|min:0',
         ]);
+
+        $attendance = Attendance::findOrFail($id);
 
         $attendance->update([
-            'worker_id' => $request->worker_id,
-            'date' => $request->date,
             'status' => $request->status,
-            'overtime_hours' => $request->overtime_hours ?? 0,
+            'overtime_hours' => $request->overtime_hours ?: 0,
         ]);
 
-        return redirect()
-            ->route('projects.attendances.index', $project)
-            ->with('success', 'Absensi berhasil diperbarui');
+        return redirect()->back()->with('success', 'Data absensi berhasil diperbarui');
     }
 
     /**
@@ -132,17 +198,17 @@ class AttendanceController extends Controller
     {
         $attendance->delete();
         return redirect()
-            ->route('projects.attendances.index', $project)
+            ->route('attendances.index')
             ->with('success', 'Absensi berhasil dihapus');
     }
 
     public function report(Request $request, Project $project)
     {
         // Set default date range to current week
-        $startDate = $request->input('start_date') 
+        $startDate = $request->input('start_date')
             ? Carbon::parse($request->input('start_date'))
             : now()->startOfWeek();
-            
+
         $endDate = $request->input('end_date')
             ? Carbon::parse($request->input('end_date'))
             : now()->endOfWeek();
@@ -155,7 +221,7 @@ class AttendanceController extends Controller
             ->groupBy('worker_id');
 
         return view('attendances.report', compact(
-            'project', 
+            'project',
             'attendances',
             'startDate',
             'endDate'

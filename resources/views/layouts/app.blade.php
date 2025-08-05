@@ -18,7 +18,7 @@
         .nav-link.active {
             font-weight: bold;
         }
-        
+
     </style>
     @stack('styles')
 </head>
@@ -37,22 +37,22 @@
             <div class="collapse navbar-collapse pt-3 pt-md-0" id="navbarNav">
                 <ul class="navbar-nav mx-auto gap-3">
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
+                        <a class="nav-link {{ Route::is('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('workers*') ? 'active' : '' }}" href="{{ route('workers.index') }}">Pekerja</a>
+                        <a class="nav-link {{ Route::is('workers.index') ? 'active' : '' }}" href="{{ route('workers.index') }}">Pekerja</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('projects*') ? 'active' : '' }}" href="{{ route('projects.index') }}">Proyek</a>
+                        <a class="nav-link {{ Route::is('projects.index') ? 'active' : '' }}" href="{{ route('projects.index') }}">Proyek</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('attendances*') ? 'active' : '' }}" href="#">Input Absensi</a>
+                        <a class="nav-link {{ Route::is('attendances.create') ? 'active' : '' }}" href="{{ route('attendances.create') }}">Input Absensi</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('attendances*') ? 'active' : '' }}" href="#">Lihat Absensi</a>
-                    </li>
+                        <a class="nav-link {{ Route::is('attendances.index') ? 'active' : '' }}" href="{{ route('attendances.index') }}">Lihat Absensi</a>
+                    </li>   
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('reports*') ? 'active' : '' }}" href="#">Laporan</a>
+                        <a class="nav-link {{ Route::is('attendances.report') ? 'active' : '' }}" href="">Laporan</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">

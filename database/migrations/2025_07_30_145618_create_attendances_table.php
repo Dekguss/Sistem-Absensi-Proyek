@@ -18,12 +18,12 @@ return new class extends Migration
             $table->foreignId('project_id')->constrained()->onUpdate('cascade')->onDelete('cascade');
             $table->foreignId('worker_id')->constrained()->onUpdate('cascade')->onDelete('cascade');
             $table->date('date');
-            $table->time('check_in')->nullable();
-            $table->time('check_out')->nullable();
+            $table->enum('status', ['1_hari', 'setengah_hari', 'tidak_bekerja', '2_hari', '1.5_hari'])->default('1_hari');
             $table->integer('overtime_hours')->default(0);
-            $table->boolean('count_as_two_days')->default(false);
-            $table->text('notes')->nullable();
             $table->timestamps();
+
+            // Add unique constraint to prevent duplicate attendance entries
+            $table->unique(['project_id', 'worker_id', 'date']);
         });
     }
 

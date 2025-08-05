@@ -56,11 +56,11 @@
                 <table class="table table-hover w-100">
                     <thead class="table-light">
                         <tr>
-                            <th scope="col" class="px-4 py-3">No</th>
-                            <th scope="col" class="px-4 py-3">Nama</th>
-                            <th scope="col" class="px-4 py-3">Role</th>
-                            <th scope="col" class="px-4 py-3 text-nowrap">Gaji Harian</th>
-                            <th scope="col" class="px-4 py-3">Aksi</th>
+                            <th scope="col" class="text-uppercase small text-muted px-4 py-3 align-middle">No</th>
+                            <th scope="col" class="text-uppercase small text-muted px-4 py-3 align-middle">Nama</th>
+                            <th scope="col" class="text-uppercase small text-muted px-4 py-3 align-middle">Role</th>
+                            <th scope="col" class="text-uppercase small text-muted px-4 py-3 align-middle text-nowrap">Gaji Harian</th>
+                            <th scope="col" class="text-uppercase small text-muted px-4 py-3 align-middle">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
