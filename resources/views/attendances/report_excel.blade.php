@@ -82,8 +82,19 @@
         unset($workerData); // Break the reference
         @endphp
 
-        @foreach($workers as $worker)
+        @php
+        // Urutkan pekerja berdasarkan peran: mandor -> tukang -> peladen
+        $roleOrder = ['mandor' => 1, 'tukang' => 2, 'peladen' => 3];
+        $sortedWorkers = $workers->sortBy(function($worker) use ($roleOrder) {
+            return $roleOrder[strtolower($worker->role)] ?? 999;
+        });
+        @endphp
+
+        @foreach($sortedWorkers as $worker)
             @php
+            if (!isset($groupedAttendances[$worker->id])) {
+                continue; // Skip jika worker tidak ada di groupedAttendances
+            }
             $workerAttendances = $groupedAttendances[$worker->id]['attendances'];
             @endphp
             <tr>
