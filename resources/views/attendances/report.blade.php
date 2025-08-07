@@ -3,7 +3,7 @@
 @section('title', 'Laporan Absensi')
 
 @section('content')
-<div class="container-fluid">
+<div>
     <div class="mb-4">
         <h1 class="h3 mb-0 text-gray-800 fw-bold mb-2">Laporan Absensi</h1>
         <p class="text-muted mb-0">Export laporan absensi pekerja per proyek ke format Excel</p>
@@ -81,7 +81,7 @@
                             <th rowspan="2" class="align-middle">NAME</th>
                             <th rowspan="2" class="align-middle">POSITION</th>
                             @foreach($dates as $date)
-                            <th colspan="2" class="text-center" style="min-width: 100px;">
+                            <th colspan="2" class="text-center text-uppercase" style="min-width: 100px;">
                                 <div>{{ \Carbon\Carbon::parse($date)->isoFormat('ddd') }}</div>
                             </th>
                             @endforeach
@@ -223,11 +223,14 @@
         </div>
     </div>
     @else
-    <div class="text-center py-5">
-        <div class="mb-3">
-            <i class="fas fa-file-alt fa-4x text-gray-300"></i>
+   <div class="card shadow-sm">
+        <div class="card-body text-center p-5">
+            <div class="mb-4">
+                <i class="ri-calendar-line text-muted" style="font-size: 4rem;"></i>
+            </div>
+            <h4 class="h5 text-gray-800 mb-3">Pilih Proyek dan Rentang Tanggal</h4>
+            <p class="text-muted mb-4">Silakan pilih proyek dan rentang tanggal terlebih dahulu untuk melihat laporan absensi.</p>
         </div>
-        <h5 class="text-gray-600">Pilih proyek dan rentang tanggal untuk melihat laporan</h5>
     </div>
     @endif
 </div>
