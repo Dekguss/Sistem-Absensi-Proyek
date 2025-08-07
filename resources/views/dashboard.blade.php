@@ -45,7 +45,7 @@
                     </div>
                     <div>
                         <p class="text-muted small mb-1">Hadir Hari Ini</p>
-                        <h3 class="mb-0">18</h3>
+                        <h3 class="mb-0">{{ $presentCount }}</h3>
                     </div>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                     </div>
                     <div>
                         <p class="text-muted small mb-1">Tidak Hadir</p>
-                        <h3 class="mb-0">6</h3>
+                        <h3 class="mb-0">{{ $absentCount }}</h3>
                     </div>
                 </div>
             </div>
@@ -102,7 +102,7 @@
         </div>
 
         <div class="col-12 col-md-6 col-lg-4">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('attendances.index')}}" class="text-decoration-none">
                 <div class="card h-100 border shadow-sm">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -119,7 +119,7 @@
         </div>
 
         <div class="col-12 col-md-6 col-lg-4">
-            <a href="#" class="text-decoration-none">
+            <a href="{{ route('attendances.report') }}" class="text-decoration-none">
                 <div class="card h-100 border shadow-sm">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -136,7 +136,7 @@
         </div>
 
         <div class="col-12 col-md-6 col-lg-4">
-            <a href="#" class="text-decoration-none">
+            <a href="{{ route('attendances.create') }}" class="text-decoration-none">
                 <div class="card h-100 border shadow-sm">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">

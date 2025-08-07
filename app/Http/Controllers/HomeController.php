@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Worker;
 use Illuminate\Http\Request;
+use App\Models\Attendance;
+use Carbon\Carbon;
 
 class HomeController extends Controller
 {
@@ -27,6 +29,23 @@ class HomeController extends Controller
     {
         $workers = Worker::all();
         $projects = Project::all();
-        return view('dashboard', compact('workers', 'projects'));
+        
+        // Get today's date
+        $today = Carbon::today()->toDateString();
+        
+        // Get all attendances for today
+        $attendances = Attendance::whereDate('date', $today)->get();
+        
+        // Count different attendance statuses
+        $presentCount = $attendances->whereIn('status', ['1_hari', 'setengah_hari', '2_hari', '1.5_hari'])->count();
+        $absentCount = $attendances->where('status', 'tidak_bekerja')->count();
+        
+        return view('dashboard', compact(
+            'workers', 
+            'projects', 
+            'attendances',
+            'presentCount',
+            'absentCount'
+        ));
     }
 }
