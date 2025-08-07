@@ -81,7 +81,7 @@
                                 <i class="ri-team-line text-dark fs-4"></i>
                             </div>
                             <div>
-                                <p class="text-muted mb-0 small">Total Pekerja</p>
+                                <p class="text-muted mb-0 small">Total Absensi</p>
                                 <h3 class="h4 fw-bold mb-0">{{ $attendances->count() }}</h3>
                             </div>
                         </div>
@@ -190,6 +190,16 @@
 
     <div class="card-body p-0">
         <div class="table-responsive">
+        @if($attendances->count() == 0)
+         <div class="col-12">
+                <div class="text-center py-4">
+                    <div class="text-muted">
+                        <i class="ri-refresh-line fa-2x mb-2"></i>
+                        <p class="mb-0">Belum ada data absensi</p>
+                    </div>
+                </div>
+            </div>
+        @else   
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
@@ -261,6 +271,7 @@
                 </tbody>
             </table>
         </div>
+        @endif
     </div>
 </div>
 
