@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\Project;
 use App\Models\Worker;
+use App\Exports\AttendanceReportExport;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 use Rap2hpoutre\FastExcel\FastExcel;
-use Spatie\Excel\Facades\Excel;
+use Spatie\Excel\Facades\Excel as SpatieExcel;
 
 /**
  * Class AttendanceController
@@ -239,177 +241,40 @@ class AttendanceController extends Controller
         ));
     }
 
-    public function export(Request $request, Project $project)
+    public function export(Request $request)
     {
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $projectId = $request->input('project_id');
+        $startDateStr = $request->input('start_date');
+        $endDateStr = $request->input('end_date');
 
-        // Get all dates in the range as strings
-        $dates = collect();
-        $currentDate = \Carbon\Carbon::parse($startDate);
-        while ($currentDate->lte(\Carbon\Carbon::parse($endDate))) {
-            $dates->push($currentDate->format('Y-m-d'));
-            $currentDate->addDay();
-        }
+        $project = Project::with('mandor')->findOrFail($projectId);
+        $workers = $project->workers()->orderBy('name')->get();
 
-        // Get all workers for the project
-        $workers = $project->workers;
-        
-        // Add mentor to workers collection if exists
+        // Add mandor to the workers collection
         if ($project->mandor) {
-            $mandor = $project->mandor;
-            $mandor->role = 'mandor';  // Ensure role is set
-            $workers->push($mandor);   // Add mentor to the workers collection
-        }
-        
-        // Initialize attendance data for all workers with all dates
-        $groupedAttendances = [];
-        
-        foreach ($workers as $worker) {
-            $groupedAttendances[$worker->id] = [
-                'worker' => $worker,
-                'attendances' => [],
-                'total_ot' => 0,
-                'work_days' => 0,
-                'wage' => 0,
-                'ot_wage' => 0,
-                'total_wage' => 0,
-                'total_overtime' => 0,
-                'grand_total' => 0
-            ];
-            
-            // Initialize empty attendance for all dates
-            foreach ($dates as $dateStr) {
-                $groupedAttendances[$worker->id]['attendances'][$dateStr] = null;
-            }
-        }
-        
-        // Get all attendances for the date range and update the initialized data
-        $attendances = $project->attendances()
-            ->with('worker')
-            ->whereBetween('date', [$startDate, $endDate])
-            ->get();
-            
-        foreach ($attendances as $attendance) {
-            $workerId = $attendance->worker_id;
-            $dateStr = \Carbon\Carbon::parse($attendance->date)->format('Y-m-d');
-            
-            if (isset($groupedAttendances[$workerId])) {
-                $groupedAttendances[$workerId]['attendances'][$dateStr] = $attendance;
-                $groupedAttendances[$workerId]['total_ot'] += $attendance->overtime_hours;
-
-                // Calculate work days
-                $status = $attendance->status;
-                $workDay = 0;
-                if ($status === '1_hari') {
-                    $workDay = 1;
-                } elseif ($status === 'setengah_hari') {
-                    $workDay = 0.5;
-                } elseif ($status === '1.5_hari') {
-                    $workDay = 1.5;
-                } elseif ($status === '2_hari') {
-                    $workDay = 2;
-                }
-                
-                $groupedAttendances[$workerId]['work_days'] += $workDay;
-            }
+            $workers->prepend($project->mandor);
         }
 
-        // Calculate wages and totals
-        foreach ($groupedAttendances as &$workerData) {
-            $worker = $workerData['worker'];
-            $otRate = in_array($worker->role, ['mandor', 'tukang']) ? 20000 : 15000;
-            $dailyWage = $worker->daily_salary;
-
-            $workerData['wage'] = $dailyWage;
-            $workerData['ot_wage'] = $otRate;
-            $workerData['total_wage'] = $dailyWage * $workerData['work_days'];
-            $workerData['total_overtime'] = $workerData['total_ot'] * $otRate;
-            $workerData['grand_total'] = $workerData['total_wage'] + $workerData['total_overtime'];
+        $dates = [];
+        $startDate = \Carbon\Carbon::parse($startDateStr);
+        $endDate = \Carbon\Carbon::parse($endDateStr);
+        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+            $dates[] = $date->copy()->format('Y-m-d');
         }
-        unset($workerData);
 
-        // Sort workers by role
-        $sortedAttendances = collect($groupedAttendances)->sortBy(function($item) {
-            $roleOrder = ['mandor' => 1, 'tukang' => 2, 'peladen' => 3];
-            $role = strtolower($item['worker']->role);
-            return $roleOrder[$role] ?? 999;
-        });
+        $attendances = Attendance::with('worker')->whereIn('worker_id', $workers->pluck('id'))
+            ->whereBetween('date', [$startDateStr, $endDateStr])
+            ->get()
+            ->groupBy(function($att) {
+                return \Carbon\Carbon::parse($att->date)->format('Y-m-d');
+            });
 
-        // Prepare data for Excel
-        $excelData = [];
-        
-        // Add headers
-        $header1 = ['NAME', 'POSITION'];
-        $header2 = ['', ''];
-        
-        foreach ($dates as $dateStr) {
-            $header1[] = \Carbon\Carbon::parse($dateStr)->isoFormat('ddd');
-            $header1[] = '';
-            $header2[] = \Carbon\Carbon::parse($dateStr)->format('d/m');
-            $header2[] = 'OT';
-        }
-        
-        $header1 = array_merge($header1, [
-            'Total OT', 'Work Day', 'Wage', 'OT Wage', 'Total Wage', 'Total Overtime', 'Grand Total'
-        ]);
-        
-        $header2 = array_merge($header2, array_fill(0, 7, ''));
-        
-        $excelData[] = $header1;
-        $excelData[] = $header2;
-        
-        // Add data rows
-        foreach ($sortedAttendances as $workerId => $data) {
-            $worker = $data['worker'];
-            $workerAttendances = $data['attendances'];
-            
-            $row = [
-                strtoupper($worker->name),
-                strtoupper($worker->role)
-            ];
-            
-            foreach ($dates as $dateStr) {
-                $attendance = $workerAttendances[$dateStr] ?? null;
-                $status = $attendance ? $attendance->status : '';
-                $overtime = $attendance ? $attendance->overtime_hours : 0;
-                
-                $statusText = '0'; // Default to 0 (tidak bekerja)
-                if ($status === '1_hari') {
-                    $statusText = '1';
-                } elseif ($status === 'setengah_hari') {
-                    $statusText = '0,5';
-                } elseif ($status === '1.5_hari') {
-                    $statusText = '1,5';
-                } elseif ($status === '2_hari') {
-                    $statusText = '2';
-                }
-                
-                $row[] = $statusText;
-                $row[] = $overtime > 0 ? number_format($overtime, 1, ',', '.') : '';
-            }
-            
-            // Add calculated columns
-            $row = array_merge($row, [
-                number_format($data['total_ot'], 1, ',', '.'),
-                number_format($data['work_days'], 1, ',', '.'),
-                number_format($data['wage'], 0, ',', '.'),
-                number_format($data['ot_wage'], 0, ',', '.'),
-                number_format($data['total_wage'], 0, ',', '.'),
-                number_format($data['total_overtime'], 0, ',', '.'),
-                number_format($data['grand_total'], 0, ',', '.')
-            ]);
-            
-            $excelData[] = $row;
-        }
-        
-        // Generate filename
-        $fileName = 'rekap_absensi_' . Str::slug($project->name) . '_' . 
-                   \Carbon\Carbon::parse($startDate)->format('Ymd') . '_' . 
-                   \Carbon\Carbon::parse($endDate)->format('Ymd') . '.xlsx';
-        
-        // Generate Excel file
-        return (new FastExcel(collect($excelData)))->download($fileName);
+        $projectName = $project->name;
+        $fileName = 'Laporan Absensi - ' . $projectName . ' - ' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y') . '.xlsx';
+
+        $projects = Project::orderBy('name')->get(); // Add this line to get all projects
+
+        return Excel::download(new AttendanceReportExport($attendances, $dates, $workers, $projectName, $projects, $projectId), $fileName);
     }
 
     /**

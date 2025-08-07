@@ -44,16 +44,16 @@
 
     @if(isset($selectedProject))
     <div class="card shadow-sm mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center justify-content-between w-100">
-                <div class="project-info">
-                    <h5 class="mb-0 text-uppercase fw-bold">
+        <div class="card-header">
+            <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between w-100 gap-3">
+                <div class="project-info flex-grow-1">
+                    <h5 class="mb-2 mb-md-2 text-uppercase fw-bold">
                         Laporan Absensi Pekerja - {{ $selectedProject->name }}
                     </h5>
-                    <div class="d-flex gap-3 mt-2">
-                        <p class="text-muted small mb-0">
+                    <div class="d-flex flex-column flex-md-row gap-2 gap-md-3">
+                        <p class="text-muted small mb-1 mb-md-0">
                             <i class="ri-calendar-line me-1"></i> 
-                            Periode: {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}
+                            Periode: {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }} ({{ \Carbon\Carbon::parse($startDate)->diffInDays(\Carbon\Carbon::parse($endDate)) + 1 }} hari)
                         </p>
                         <p class="text-muted small mb-0">
                             <i class="ri-group-line me-1"></i> 
@@ -61,16 +61,16 @@
                         </p>
                     </div>
                 </div>
-                <div class="ms-3">
-                    <form action="{{ route('attendances.export', $selectedProject->id) }}" method="GET" class="m-0">
-                        <input type="hidden" name="project_id" value="{{ $projectId }}">
-                        <input type="hidden" name="start_date" value="{{ $startDate }}">
-                        <input type="hidden" name="end_date" value="{{ $endDate }}">
-                        <button type="submit" class="btn btn-success">
-                            <i class="ri-file-excel-line me-1"></i> Export Excel
-                        </button>
-                    </form>
-                </div>
+                <div class="ms-auto">
+                <form action="{{ route('attendances.export', $selectedProject->id) }}" method="GET" class="m-0">
+                    <input type="hidden" name="project_id" value="{{ $projectId }}">
+                    <input type="hidden" name="start_date" value="{{ $startDate }}">
+                    <input type="hidden" name="end_date" value="{{ $endDate }}">
+                    <button type="submit" class="btn btn-success px-3">
+                        <i class="ri-file-excel-line me-1"></i> Export Excel
+                    </button>
+                </form>
+            </div>
             </div>
         </div>
         <div class="card-body">
