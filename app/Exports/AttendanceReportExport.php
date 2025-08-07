@@ -146,6 +146,9 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
                 // 3. Loop through sorted workers and apply styles row by row.
                 $worker_row = 3; // Data starts at row 3
                 foreach ($sortedWorkers as $worker) {
+                    if (empty($attendancesByWorker[$worker->id])) {
+                        continue;
+                    }
                     $date_col_index = 3; // Date data starts at column 'C'
                     foreach ($this->dates as $date) {
                         $attendance = $attendancesByWorker[$worker->id][$date] ?? null;
