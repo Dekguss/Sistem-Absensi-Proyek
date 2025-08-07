@@ -52,7 +52,7 @@
                         <a class="nav-link {{ Route::is('attendances.index') ? 'active' : '' }}" href="{{ route('attendances.index') }}">Lihat Absensi</a>
                     </li>   
                     <li class="nav-item">
-                        <a class="nav-link {{ Route::is('attendances.report') ? 'active' : '' }}" href="">Laporan</a>
+                        <a class="nav-link {{ Route::is('attendances.report') ? 'active' : '' }}" href="{{ route('attendances.report') }}">Laporan</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">

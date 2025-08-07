@@ -202,56 +202,232 @@ class AttendanceController extends Controller
             ->with('success', 'Absensi berhasil dihapus');
     }
 
-    public function report(Request $request, Project $project)
+    public function report(Request $request)
     {
-        // Set default date range to current week
-        $startDate = $request->input('start_date')
-            ? Carbon::parse($request->input('start_date'))
-            : now()->startOfWeek();
+        $projects = Project::all();  // Get all projects for the dropdown
 
-        $endDate = $request->input('end_date')
-            ? Carbon::parse($request->input('end_date'))
-            : now()->endOfWeek();
+        // Set default dates
+        $startDate = $request->input('start_date', now()->format('Y-m-d'));
+        $endDate = $request->input('end_date', now()->format('Y-m-d'));
+        $projectId = $request->input('project_id');
 
-        $attendances = Attendance::with('worker')
-            ->where('project_id', $project->id)
-            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-            ->orderBy('date')
-            ->get()
-            ->groupBy('worker_id');
+        $selectedProject = null;
+        $attendances = collect();
+        $dates = collect();
+
+        if ($projectId) {
+            $selectedProject = Project::findOrFail($projectId);
+
+            $attendances = $selectedProject->attendances()
+                ->with('worker')
+                ->orderBy('date')
+                ->whereBetween('date', [$startDate, $endDate])
+                ->get()
+                ->groupBy('date');
+
+            $dates = $attendances->keys();
+        }
 
         return view('attendances.report', compact(
-            'project',
-            'attendances',
+            'projects',
+            'selectedProject',
             'startDate',
-            'endDate'
+            'endDate',
+            'projectId',
+            'attendances',
+            'dates'
         ));
     }
 
-    public function export(Project $project)
+    public function export(Request $request, Project $project)
     {
-        $attendances = $project
-            ->attendances()
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        // Get all dates in the range as strings
+        $dates = collect();
+        $currentDate = \Carbon\Carbon::parse($startDate);
+        while ($currentDate->lte(\Carbon\Carbon::parse($endDate))) {
+            $dates->push($currentDate->format('Y-m-d'));
+            $currentDate->addDay();
+        }
+
+        // Get all workers for the project
+        $workers = $project->workers;
+        
+        // Add mentor to workers collection if exists
+        if ($project->mandor) {
+            $mandor = $project->mandor;
+            $mandor->role = 'mandor';  // Ensure role is set
+            $workers->push($mandor);   // Add mentor to the workers collection
+        }
+        
+        // Initialize attendance data for all workers with all dates
+        $groupedAttendances = [];
+        
+        foreach ($workers as $worker) {
+            $groupedAttendances[$worker->id] = [
+                'worker' => $worker,
+                'attendances' => [],
+                'total_ot' => 0,
+                'work_days' => 0,
+                'wage' => 0,
+                'ot_wage' => 0,
+                'total_wage' => 0,
+                'total_overtime' => 0,
+                'grand_total' => 0
+            ];
+            
+            // Initialize empty attendance for all dates
+            foreach ($dates as $dateStr) {
+                $groupedAttendances[$worker->id]['attendances'][$dateStr] = null;
+            }
+        }
+        
+        // Get all attendances for the date range and update the initialized data
+        $attendances = $project->attendances()
             ->with('worker')
-            ->orderBy('date', 'desc')
-            ->get()
-            ->map(function ($item) {
-                // Pastikan $item->date adalah instance Carbon
-                $date = is_string($item->date)
-                    ? \Carbon\Carbon::parse($item->date)
-                    : $item->date;
+            ->whereBetween('date', [$startDate, $endDate])
+            ->get();
+            
+        foreach ($attendances as $attendance) {
+            $workerId = $attendance->worker_id;
+            $dateStr = \Carbon\Carbon::parse($attendance->date)->format('Y-m-d');
+            
+            if (isset($groupedAttendances[$workerId])) {
+                $groupedAttendances[$workerId]['attendances'][$dateStr] = $attendance;
+                $groupedAttendances[$workerId]['total_ot'] += $attendance->overtime_hours;
 
-                return [
-                    'Tanggal' => $date->format('d/m/Y'),
-                    'Nama' => $item->worker->name,
-                    'Jabatan' => ucfirst($item->worker->role),
-                    'Status' => $item->status,
-                    'Gaji Harian' => 'Rp ' . number_format($item->worker->daily_salary, 0, ',', '.'),
-                ];
-            });
+                // Calculate work days
+                $status = $attendance->status;
+                $workDay = 0;
+                if ($status === '1_hari') {
+                    $workDay = 1;
+                } elseif ($status === 'setengah_hari') {
+                    $workDay = 0.5;
+                } elseif ($status === '1.5_hari') {
+                    $workDay = 1.5;
+                } elseif ($status === '2_hari') {
+                    $workDay = 2;
+                }
+                
+                $groupedAttendances[$workerId]['work_days'] += $workDay;
+            }
+        }
 
-        $fileName = 'rekap_absensi_' . Str::slug($project->name) . '.xlsx';
+        // Calculate wages and totals
+        foreach ($groupedAttendances as &$workerData) {
+            $worker = $workerData['worker'];
+            $otRate = in_array($worker->role, ['mandor', 'tukang']) ? 20000 : 15000;
+            $dailyWage = $worker->daily_salary;
 
-        return (new FastExcel($attendances))->download($fileName);
+            $workerData['wage'] = $dailyWage;
+            $workerData['ot_wage'] = $otRate;
+            $workerData['total_wage'] = $dailyWage * $workerData['work_days'];
+            $workerData['total_overtime'] = $workerData['total_ot'] * $otRate;
+            $workerData['grand_total'] = $workerData['total_wage'] + $workerData['total_overtime'];
+        }
+        unset($workerData);
+
+        // Sort workers by role
+        $sortedAttendances = collect($groupedAttendances)->sortBy(function($item) {
+            $roleOrder = ['mandor' => 1, 'tukang' => 2, 'peladen' => 3];
+            $role = strtolower($item['worker']->role);
+            return $roleOrder[$role] ?? 999;
+        });
+
+        // Prepare data for Excel
+        $excelData = [];
+        
+        // Add headers
+        $header1 = ['NAME', 'POSITION'];
+        $header2 = ['', ''];
+        
+        foreach ($dates as $dateStr) {
+            $header1[] = \Carbon\Carbon::parse($dateStr)->isoFormat('ddd');
+            $header1[] = '';
+            $header2[] = \Carbon\Carbon::parse($dateStr)->format('d/m');
+            $header2[] = 'OT';
+        }
+        
+        $header1 = array_merge($header1, [
+            'Total OT', 'Work Day', 'Wage', 'OT Wage', 'Total Wage', 'Total Overtime', 'Grand Total'
+        ]);
+        
+        $header2 = array_merge($header2, array_fill(0, 7, ''));
+        
+        $excelData[] = $header1;
+        $excelData[] = $header2;
+        
+        // Add data rows
+        foreach ($sortedAttendances as $workerId => $data) {
+            $worker = $data['worker'];
+            $workerAttendances = $data['attendances'];
+            
+            $row = [
+                strtoupper($worker->name),
+                strtoupper($worker->role)
+            ];
+            
+            foreach ($dates as $dateStr) {
+                $attendance = $workerAttendances[$dateStr] ?? null;
+                $status = $attendance ? $attendance->status : '';
+                $overtime = $attendance ? $attendance->overtime_hours : 0;
+                
+                $statusText = '0'; // Default to 0 (tidak bekerja)
+                if ($status === '1_hari') {
+                    $statusText = '1';
+                } elseif ($status === 'setengah_hari') {
+                    $statusText = '0,5';
+                } elseif ($status === '1.5_hari') {
+                    $statusText = '1,5';
+                } elseif ($status === '2_hari') {
+                    $statusText = '2';
+                }
+                
+                $row[] = $statusText;
+                $row[] = $overtime > 0 ? number_format($overtime, 1, ',', '.') : '';
+            }
+            
+            // Add calculated columns
+            $row = array_merge($row, [
+                number_format($data['total_ot'], 1, ',', '.'),
+                number_format($data['work_days'], 1, ',', '.'),
+                number_format($data['wage'], 0, ',', '.'),
+                number_format($data['ot_wage'], 0, ',', '.'),
+                number_format($data['total_wage'], 0, ',', '.'),
+                number_format($data['total_overtime'], 0, ',', '.'),
+                number_format($data['grand_total'], 0, ',', '.')
+            ]);
+            
+            $excelData[] = $row;
+        }
+        
+        // Generate filename
+        $fileName = 'rekap_absensi_' . Str::slug($project->name) . '_' . 
+                   \Carbon\Carbon::parse($startDate)->format('Ymd') . '_' . 
+                   \Carbon\Carbon::parse($endDate)->format('Ymd') . '.xlsx';
+        
+        // Generate Excel file
+        return (new FastExcel(collect($excelData)))->download($fileName);
+    }
+
+    /**
+     * Get the label for attendance status
+     *
+     * @param string $status
+     * @return string
+     */
+    private function getStatusLabel($status)
+    {
+        $statusLabels = [
+            '1_hari' => '1 Hari',
+            'setengah_hari' => 'Setengah Hari',
+            '1.5_hari' => '1.5 Hari',
+            '2_hari' => '2 Hari',
+            'tidak_bekerja' => 'Tidak Bekerja'
+        ];
+
+        return $statusLabels[$status] ?? $status;
     }
 }

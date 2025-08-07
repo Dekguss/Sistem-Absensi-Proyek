@@ -22,6 +22,8 @@ Route::get('/', [HomeController::class, 'index'])->name('dashboard');
 Route::resource('workers', WorkerController::class);
 Route::resource('projects', ProjectController::class);
 Route::resource('attendances', AttendanceController::class);
+Route::get('/report', [AttendanceController::class, 'report'])->name('attendances.report');
+Route::get('/projects/{project}/export', [AttendanceController::class, 'export'])->name('attendances.export');
 
 // Route::prefix('projects/{project}/attendances')->group(function () {
 //     Route::get('/', [AttendanceController::class, 'index'])->name('projects.attendances.index');
