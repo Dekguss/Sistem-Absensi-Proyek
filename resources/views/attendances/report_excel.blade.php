@@ -8,13 +8,13 @@
                 <div>{{ \Carbon\Carbon::parse($date)->isoFormat('ddd') }}</div>
             </th>
             @endforeach
-            <th rowspan="2" class="align-middle text-center text-uppercase">Total OT</th>
-            <th rowspan="2" class="align-middle text-center text-uppercase">Work Day</th>
-            <th rowspan="2" class="align-middle text-center text-uppercase">Wage</th>
-            <th rowspan="2" class="align-middle text-center text-uppercase">OT Wage</th>
-            <th rowspan="2" class="align-middle text-center text-uppercase">Total Wage</th>
-            <th rowspan="2" class="align-middle text-center text-uppercase">Total Overtime</th>
-            <th rowspan="2" class="align-middle text-center text-uppercase">Grand Total</th>
+            <th rowspan="2" class="align-middle text-center text-uppercase">TOTAL OT</th>
+            <th rowspan="2" class="align-middle text-center text-uppercase">WORK DAY</th>
+            <th rowspan="2" class="align-middle text-center text-uppercase">WAGE</th>
+            <th rowspan="2" class="align-middle text-center text-uppercase">OT WAGE</th>
+            <th rowspan="2" class="align-middle text-center text-uppercase">TOTAL WAGE</th>
+            <th rowspan="2" class="align-middle text-center text-uppercase">TOTAL OVERTIME</th>
+            <th rowspan="2" class="align-middle text-center text-uppercase">GRAND TOTAL</th>
         </tr>
         <tr>
             @foreach($dates as $date)
@@ -82,22 +82,13 @@
         unset($workerData); // Break the reference
         @endphp
 
-        @php
-        // filter mandor, tukang, peladen
-        $roleOrder = ['mandor' => 1, 'tukang' => 2, 'peladen' => 3];
-        $sortedWorkers = collect($groupedAttendances)->sortBy(function($item) use ($roleOrder) {
-            return $roleOrder[strtolower($item['worker']->role)] ?? 999;
-        });
-        @endphp
-
-        @foreach($sortedWorkers as $workerId => $data)
+        @foreach($workers as $worker)
             @php
-            $worker = $data['worker'];
-            $workerAttendances = $data['attendances'];
+            $workerAttendances = $groupedAttendances[$worker->id]['attendances'];
             @endphp
             <tr>
-                <td class="text-uppercase">{{ $worker->name }}</td>
-                <td class="text-uppercase">{{ $worker->role }}</td>
+                <td class="text-uppercase">{{ strtoupper($worker->name) }}</td>
+                <td class="text-uppercase">{{ strtoupper($worker->role) }}</td>
                 @foreach($dates as $date)
                     @php
                     $attendance = $workerAttendances[$date] ?? null;
@@ -110,24 +101,25 @@
                     if ($status === '1_hari') {
                         $statusText = '1';
                     } elseif ($status === 'setengah_hari') {
-                        $statusText = '0,5';
+                        $statusText = '0.5';
                     } elseif ($status === '1.5_hari') {
-                        $statusText = '1,5';
+                        $statusText = '1.5';
                     } elseif ($status === '2_hari') {
                         $statusText = '2';
                     }
                     @endphp
                     <td data-is-absent="{{ $isAbsent ? 'true' : 'false' }}" class="text-center">
-                    {{ $statusText }}</td>
+                        {{ strtoupper($statusText) }}
+                    </td>
                     <td data-is-absent="{{ $isAbsent ? 'true' : 'false' }}" class="text-center">{{ $overtime ?: '' }}</td>
                 @endforeach
-                <td class="text-center">{{ number_format($data['total_ot'], 1, ',', '.') }}</td>
-                <td class="text-center">{{ number_format($data['work_days'], 1, ',', '.') }}</td>
-                <td class="text-end">{{ number_format($data['wage'], 0, ',', '') }}</td>
-                <td class="text-end">{{ number_format($data['ot_wage'], 0, ',', '') }}</td>
-                <td class="text-end">{{ number_format($data['total_wage'], 0, ',', '') }}</td>
-                <td class="text-end">{{ number_format($data['total_overtime'], 0, ',', '') }}</td>
-                <td class="text-end fw-bold">{{ number_format($data['grand_total'], 0, ',', '') }}</td>
+                <td class="text-center">{{ number_format($groupedAttendances[$worker->id]['total_ot'], 1, ',', '.') }}</td>
+                <td class="text-center">{{ number_format($groupedAttendances[$worker->id]['work_days'], 1, ',', '.') }}</td>
+                <td class="text-end">{{ number_format($groupedAttendances[$worker->id]['wage'], 0, ',', '') }}</td>
+                <td class="text-end">{{ number_format($groupedAttendances[$worker->id]['ot_wage'], 0, ',', '') }}</td>
+                <td class="text-end">{{ number_format($groupedAttendances[$worker->id]['total_wage'], 0, ',', '') }}</td>
+                <td class="text-end">{{ number_format($groupedAttendances[$worker->id]['total_overtime'], 0, ',', '') }}</td>
+                <td class="text-end fw-bold">{{ number_format($groupedAttendances[$worker->id]['grand_total'], 0, ',', '') }}</td>
             </tr>
         @endforeach
     </tbody>

@@ -157,6 +157,12 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
 
                             $sheet->getStyle($work_day_col . $worker_row)->applyFromArray($redFill);
                             $sheet->getStyle($ot_col . $worker_row)->applyFromArray($redFill);
+                        } else if (!is_null($attendance)) {
+                            // Check for OT conditions
+                            $ot_col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($date_col_index + 1);
+                            if (empty($attendance->overtime_hours) || $attendance->overtime_hours == '0') {
+                                $sheet->getStyle($ot_col . $worker_row)->applyFromArray($redFill);
+                            }
                         }
                         $date_col_index += 2;
                     }

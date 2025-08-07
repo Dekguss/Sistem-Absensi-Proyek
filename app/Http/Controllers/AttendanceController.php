@@ -296,3 +296,5 @@ class AttendanceController extends Controller
         return $statusLabels[$status] ?? $status;
     }
 }
+
+    
