@@ -120,6 +120,20 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
                     ],
                 ]);
 
+                // Remove border for the grand total label cell
+                $grandTotalLabelCol = 'A';
+                $grandTotalLabelRow = $highestRow;
+                $lastColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn) - 1;
+                $lastColumnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColumnIndex);
+                
+                $sheet->getStyle($grandTotalLabelCol . $grandTotalLabelRow . ':' . $lastColumnLetter . $grandTotalLabelRow)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                        ],
+                    ],
+                ]);
+
                 // --- Corrected Conditional Formatting Logic ---
 
                 // 1. Re-group attendances by worker_id for easy lookup.

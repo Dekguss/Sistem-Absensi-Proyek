@@ -55,9 +55,9 @@
                             <i class="ri-calendar-line me-1"></i> 
                             Periode: {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }} ({{ \Carbon\Carbon::parse($startDate)->diffInDays(\Carbon\Carbon::parse($endDate)) + 1 }} hari)
                         </p>
-                        <p class="text-muted small mb-0">
+                       <p class="text-muted small mb-0">
                             <i class="ri-group-line me-1"></i> 
-                            Total Pekerja: {{ $selectedProject->workers->count() + 1 }}
+                            Total Pekerja: {{ $selectedProject->attendances->pluck('workers')->flatten()->unique('id')->count() }}
                         </p>
                     </div>
                 </div>
@@ -217,6 +217,13 @@
                             <td class="text-end fw-bold">{{ number_format($data['grand_total'], 0, ',', '.') }}</td>
                         </tr>
                     @endforeach
+                    @php
+                        $grandTotal = collect($sortedAttendances)->sum('grand_total');
+                    @endphp
+                    <tr>
+                        <td colspan="{{ count($dates) * 2 + 8 }}" class="text-end fw-bold">Total:</td>
+                        <td class="text-end fw-bold">{{ number_format($grandTotal, 0, ',', '.') }}</td>
+                    </tr>
                     </tbody>
                 </table>
             </div>

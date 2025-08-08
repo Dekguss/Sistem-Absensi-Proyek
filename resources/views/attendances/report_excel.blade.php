@@ -133,5 +133,12 @@
                 <td class="text-end fw-bold">{{ number_format($groupedAttendances[$worker->id]['grand_total'], 0, ',', '') }}</td>
             </tr>
         @endforeach
+        @php
+        $grandTotal = collect($groupedAttendances)->sum('grand_total');
+        @endphp
+        <tr>
+            <td colspan="{{ count($dates) * 2 + 8 }}" class="text-end" style="border: none;"></td>
+            <td class="text-end fw-bold">{{ number_format($grandTotal, 0, ',', '.') }}</td>
+        </tr>
     </tbody>
 </table>
