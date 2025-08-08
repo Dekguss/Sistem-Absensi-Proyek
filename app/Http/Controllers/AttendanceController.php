@@ -282,7 +282,9 @@ class AttendanceController extends Controller
             $projectName, 
             $projects, 
             $projectId,
-            $kasbon
+            $kasbon,
+            $startDate,
+            $endDate
         ), $fileName);
     }
 

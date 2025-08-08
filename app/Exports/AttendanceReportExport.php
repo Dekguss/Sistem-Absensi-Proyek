@@ -20,8 +20,10 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
     protected $projects;
     protected $projectId;
     protected $kasbon;
+    protected $startDate;
+    protected $endDate;
 
-    public function __construct($attendances, $dates, $workers, $projectName, $projects, $projectId, $kasbon = 0)
+    public function __construct($attendances, $dates, $workers, $projectName, $projects, $projectId, $kasbon = 0, $startDate = null, $endDate = null)
     {
         $this->attendances = $attendances;
         $this->dates = $dates;
@@ -30,6 +32,8 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
         $this->projects = $projects;
         $this->projectId = $projectId;
         $this->kasbon = (float) $kasbon;
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
     }
 
     public function view(): View
@@ -43,6 +47,8 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
             'projectId' => $this->projectId,
             'selectedProject' => $this->workers->first()->project ?? null,
             'kasbon' => $this->kasbon,
+            'startDate' => $this->startDate,
+            'endDate' => $this->endDate,
         ]);
     }
 
@@ -52,18 +58,18 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
         $widths = ['A' => 20, 'B' => 15];
         $startColumn = 'C';
         foreach ($this->dates as $date) {
-            $widths[$startColumn] = 5; // Date column
+            $widths[$startColumn] = 8; // Date column
             $startColumn++;
-            $widths[$startColumn] = 5; // OT column
+            $widths[$startColumn] = 8; // OT column
             $startColumn++;
         }
         // Add widths for total columns
-        $widths[$startColumn++] = 10; // TOTAL OT
-        $widths[$startColumn++] = 10; // WORK DAY
+        $widths[$startColumn++] = 15; // TOTAL OT
+        $widths[$startColumn++] = 15; // WORK DAY
         $widths[$startColumn++] = 15; // WAGE
         $widths[$startColumn++] = 15; // OT WAGE
         $widths[$startColumn++] = 15; // TOTAL WAGE
-        $widths[$startColumn++] = 15; // TOTAL OVERTIME
+        $widths[$startColumn++] = 17; // TOTAL OVERTIME
         $widths[$startColumn++] = 15; // GRAND TOTAL
         return $widths;
     }
@@ -110,8 +116,8 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
                 $highestRow = $sheet->getHighestRow();
                 $highestColumn = $sheet->getHighestColumn();
 
-                // Apply borders and alignment to all cells
-                $sheet->getStyle('A1:' . $highestColumn . $highestRow)->applyFromArray([
+                // Apply borders and alignment to all cells starting from row 4 (after the header)
+                $sheet->getStyle('A4:' . $highestColumn . $highestRow)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
@@ -120,6 +126,15 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
                     'alignment' => [
                         'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
                         'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    ],
+                ]);
+
+                // Remove border for the header rows (rows 1-3)
+                $sheet->getStyle('A1:' . $highestColumn . '3')->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
+                        ],
                     ],
                 ]);
 
@@ -184,7 +199,7 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
                 ];
 
                 // 3. Loop through sorted workers and apply styles row by row.
-                $worker_row = 3; // Data starts at row 3
+                $worker_row = 6; // Data starts at row 3
                 foreach ($sortedWorkers as $worker) {
                     if (empty($attendancesByWorker[$worker->id])) {
                         continue;

@@ -1,4 +1,18 @@
 <table class="table table-bordered table-hover">
+ <!-- Header Section -->
+    <tr>
+        <td colspan="{{ count($dates) * 2 + 9 }}" style="font-weight: bold; font-size: 16px; text-align: center;">
+            {{ strtoupper($projectName) }}
+        </td>
+    </tr>
+    <tr>
+        <td colspan="{{ count($dates) * 2 + 9 }}" style="text-align: center; font-size: 12px;">
+            {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}
+        </td>
+    </tr>
+    <tr><td colspan="{{ count($dates) * 2 + 9 }}" style="height: 15px;"></td></tr>
+
+    <!-- Table Header -->
     <thead class="table-light">
         <tr>
             <th rowspan="2" class="align-middle">NAME</th>
@@ -138,15 +152,15 @@
         @endphp
         <tr>
             <td colspan="{{ count($dates) * 2 + 8 }}" class="text-end" style="border: none;"></td>
-            <td class="text-end fw-bold">{{ number_format($grandTotal, 0, ',', '.') }}</td>
+            <td class="text-end fw-bold">{{ number_format($grandTotal, 0, ',', '') }}</td>
         </tr>
         <tr>
             <td colspan="{{ count($dates) * 2 + 8 }}" class="text-end" style="border: none;">Kasbon    </td>
-            <td class="text-end fw-bold">-{{ number_format($kasbon, 0, ',', '.') }}</td>
+            <td class="text-end fw-bold">-{{ number_format($kasbon, 0, ',', '') }}</td>
         </tr>
         <tr>
             <td colspan="{{ count($dates) * 2 + 8 }}" class="text-end" style="border: none;">Total Payable    </td>
-            <td class="text-end fw-bold">{{ number_format($grandTotal - $kasbon, 0, ',', '.') }}</td>
+            <td class="text-end fw-bold">{{ number_format($grandTotal - $kasbon, 0, ',', '') }}</td>
         </tr>
     </tbody>
 </table>
