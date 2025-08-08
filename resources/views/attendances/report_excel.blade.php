@@ -5,7 +5,7 @@
             <th rowspan="2" class="align-middle">POSITION</th>
             @foreach($dates as $date)
             <th colspan="2" class="text-center text-uppercase" style="min-width: 100px;">
-                <div>{{ \Carbon\Carbon::parse($date)->isoFormat('ddd') }}</div>
+                <div>{{ strtoupper(\Carbon\Carbon::parse($date)->isoFormat('ddd')) }}</div>
             </th>
             @endforeach
             <th rowspan="2" class="align-middle text-center text-uppercase">TOTAL OT</th>
@@ -139,6 +139,14 @@
         <tr>
             <td colspan="{{ count($dates) * 2 + 8 }}" class="text-end" style="border: none;"></td>
             <td class="text-end fw-bold">{{ number_format($grandTotal, 0, ',', '.') }}</td>
+        </tr>
+        <tr>
+            <td colspan="{{ count($dates) * 2 + 8 }}" class="text-end" style="border: none;">Kasbon    </td>
+            <td class="text-end fw-bold">-{{ number_format($kasbon, 0, ',', '.') }}</td>
+        </tr>
+        <tr>
+            <td colspan="{{ count($dates) * 2 + 8 }}" class="text-end" style="border: none;">Total Payable    </td>
+            <td class="text-end fw-bold">{{ number_format($grandTotal - $kasbon, 0, ',', '.') }}</td>
         </tr>
     </tbody>
 </table>

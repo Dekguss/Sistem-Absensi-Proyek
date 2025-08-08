@@ -19,8 +19,9 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
     protected $projectName;
     protected $projects;
     protected $projectId;
+    protected $kasbon;
 
-    public function __construct($attendances, $dates, $workers, $projectName, $projects, $projectId)
+    public function __construct($attendances, $dates, $workers, $projectName, $projects, $projectId, $kasbon = 0)
     {
         $this->attendances = $attendances;
         $this->dates = $dates;
@@ -28,6 +29,7 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
         $this->projectName = $projectName;
         $this->projects = $projects;
         $this->projectId = $projectId;
+        $this->kasbon = (float) $kasbon;
     }
 
     public function view(): View
@@ -40,6 +42,7 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
             'projects' => $this->projects,
             'projectId' => $this->projectId,
             'selectedProject' => $this->workers->first()->project ?? null,
+            'kasbon' => $this->kasbon,
         ]);
     }
 
@@ -120,19 +123,42 @@ class AttendanceReportExport implements FromView, WithStyles, WithColumnWidths, 
                     ],
                 ]);
 
-                // Remove border for the grand total label cell
+                // Remove border for the grand total, kasbon, and total payable rows
                 $grandTotalLabelCol = 'A';
-                $grandTotalLabelRow = $highestRow;
                 $lastColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn) - 1;
                 $lastColumnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColumnIndex);
                 
-                $sheet->getStyle($grandTotalLabelCol . $grandTotalLabelRow . ':' . $lastColumnLetter . $grandTotalLabelRow)->applyFromArray([
+                // Style for grand total, kasbon, and total payable rows
+                $noBorderStyle = [
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE,
                         ],
                     ],
-                ]);
+                    'alignment' => [
+                        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT,
+                    ],
+                ];
+
+                // Apply style to grand total row (2 rows above the end)
+                $grandTotalRow = $highestRow - 2;
+                $sheet->getStyle($grandTotalLabelCol . $grandTotalRow . ':' . $lastColumnLetter . $grandTotalRow)
+                    ->applyFromArray($noBorderStyle);
+
+                // Apply style to kasbon row (1 row above the end)
+                $kasbonRow = $highestRow - 1;
+                $sheet->getStyle($grandTotalLabelCol . $kasbonRow . ':' . $lastColumnLetter . $kasbonRow)
+                    ->applyFromArray($noBorderStyle);
+
+                // Apply style to total payable row (last row)
+                $totalPayableRow = $highestRow;
+                $sheet->getStyle($grandTotalLabelCol . $totalPayableRow . ':' . $lastColumnLetter . $totalPayableRow)
+                    ->applyFromArray($noBorderStyle);
+
+                // Make total payable text bold
+                $sheet->getStyle($grandTotalLabelCol . $totalPayableRow . ':' . $lastColumnLetter . $totalPayableRow)
+                    ->getFont()
+                    ->setBold(true);
 
                 // --- Corrected Conditional Formatting Logic ---
 

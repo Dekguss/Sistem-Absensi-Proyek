@@ -246,6 +246,7 @@ class AttendanceController extends Controller
         $projectId = $request->input('project_id');
         $startDateStr = $request->input('start_date');
         $endDateStr = $request->input('end_date');
+        $kasbon = (float) $request->input('kasbon', 0);
 
         $project = Project::with('mandor')->findOrFail($projectId);
         $workers = $project->workers()->orderBy('name')->get();
@@ -272,9 +273,17 @@ class AttendanceController extends Controller
         $projectName = $project->name;
         $fileName = 'Laporan Absensi - ' . $projectName . ' - ' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y') . '.xlsx';
 
-        $projects = Project::orderBy('name')->get(); // Add this line to get all projects
+        $projects = Project::orderBy('name')->get();
 
-        return Excel::download(new AttendanceReportExport($attendances, $dates, $workers, $projectName, $projects, $projectId), $fileName);
+        return Excel::download(new AttendanceReportExport(
+            $attendances, 
+            $dates, 
+            $workers, 
+            $projectName, 
+            $projects, 
+            $projectId,
+            $kasbon
+        ), $fileName);
     }
 
     /**
@@ -296,5 +305,3 @@ class AttendanceController extends Controller
         return $statusLabels[$status] ?? $status;
     }
 }
-
-    

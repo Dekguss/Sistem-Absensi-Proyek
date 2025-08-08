@@ -57,23 +57,80 @@
                         </p>
                        <p class="text-muted small mb-0">
                             <i class="ri-group-line me-1"></i> 
-                            Total Pekerja: {{ $selectedProject->attendances->pluck('workers')->flatten()->unique('id')->count() }}
+                            Total Pekerja: {{ $selectedProject->workers->count() + 1 }}
                         </p>
                     </div>
                 </div>
                 <div class="ms-auto">
-                <form action="{{ route('attendances.export', $selectedProject->id) }}" method="GET" class="m-0">
-                    <input type="hidden" name="project_id" value="{{ $projectId }}">
-                    <input type="hidden" name="start_date" value="{{ $startDate }}">
-                    <input type="hidden" name="end_date" value="{{ $endDate }}">
-                    <button type="submit" class="btn btn-success px-3">
-                        <i class="ri-file-excel-line me-1"></i> Export Excel
+                    <button type="button" class="btn btn-success px-4 py-2 rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#exportModal">
+                        <i class="ri-file-excel-line me-2"></i> Export Excel
                     </button>
-                </form>
-            </div>
+                </div>
             </div>
         </div>
         <div class="card-body">
+            <!-- Export Modal -->
+            <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title fw-bold" id="exportModalLabel">
+                                <i class="ri-download-cloud-2-line me-2"></i>Export Laporan
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form id="exportForm" action="{{ route('attendances.export', $selectedProject->id) }}" method="GET">
+                            @csrf
+                            <div class="modal-body p-4">
+                                <div class="text-center mb-4">
+                                    <div class="bg-soft-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                        <i class="ri-file-excel-2-line text-success" style="font-size: 2.5rem;"></i>
+                                    </div>
+                                    <h5 class="mb-1">Export Data Ke Excel</h5>
+                                    <p class="text-muted mb-0">Pilih opsi export sesuai kebutuhan Anda</p>
+                                </div>
+
+                                <input type="hidden" name="project_id" value="{{ $projectId }}">
+                                <input type="hidden" name="start_date" value="{{ $startDate }}">
+                                <input type="hidden" name="end_date" value="{{ $endDate }}">
+                                
+                                <div class="mb-4">
+                                    <label for="kasbon" class="form-label fw-medium">
+                                        <i class="ri-money-dollar-circle-line me-1"></i> Kasbon (Opsional)
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">Rp</span>
+                                        <input type="number" 
+                                               class="form-control form-control-lg" 
+                                               id="kasbon" 
+                                               name="kasbon" 
+                                               min="0" 
+                                               value="0"
+                                               placeholder="Masukkan jumlah kasbon">
+                                    </div>
+                                    <div class="form-text text-muted">Jumlah kasbon akan dikurangkan dari total gaji</div>
+                                </div>
+
+                                <div class="alert alert-info d-flex align-items-center" role="alert">
+                                    <i class="ri-information-line me-2"></i>
+                                    <div>
+                                        Pastikan data yang akan diexport sudah benar. Proses export mungkin memerlukan beberapa saat.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light p-4 border-top-0">
+                                <button type="button" class="btn btn-light px-4 rounded-3" data-bs-dismiss="modal">
+                                    <i class="ri-close-line me-1"></i> Batal
+                                </button>
+                                <button type="submit" class="btn btn-success px-4 rounded-3">
+                                    <i class="ri-download-line me-1"></i> Export Sekarang
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- End Export Modal -->
             <div class="table-responsive">
                 <table class="table table-bordered table-hover">
                     <thead class="table-light">
@@ -255,6 +312,28 @@
     }
 
 </style>
+@endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const exportForm = document.getElementById('exportForm');
+        const exportModal = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
+        
+        if (exportForm) {
+            exportForm.addEventListener('submit', function(e) {
+                // The form will submit normally for the file download
+                // After a short delay, close the modal
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                }, 500);
+            });
+        }
+    });
+</script>
 @endpush
 
 @endsection
