@@ -35,6 +35,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse pt-3 pt-md-0" id="navbarNav">
+                @auth
                 <ul class="navbar-nav mx-auto gap-3">
                     <li class="nav-item">
                         <a class="nav-link {{ Route::is('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
@@ -58,17 +59,15 @@
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="ri-user-line me-1"></i> Admin
+                            <i class="ri-user-line me-1"></i> {{ Auth::user()->name }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#">Profil</a></li>
                             <li><a class="dropdown-item" href="#">Pengaturan</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
-                                                 document.getElementById('logout-form').submit();">
+                                <a class="dropdown-item" href="{{ route('logout') }}" 
+                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                     Keluar
                                 </a>
                                 <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
@@ -78,6 +77,15 @@
                         </ul>
                     </li>
                 </ul>
+                @else
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {{ Route::is('login') ? 'active' : '' }}" href="{{ route('login') }}">
+                            <i class="ri-login-box-line me-1"></i> Login Admin
+                        </a>
+                    </li>
+                </ul>
+                @endauth
             </div>
         </div>
     </nav>
