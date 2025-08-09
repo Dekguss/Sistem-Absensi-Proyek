@@ -23,7 +23,7 @@
     @stack('styles')
 </head>
 <body class="bg-gray-50">
-    <nav class="navbar navbar-expand-lg bg-light shadow-sm border-bottom border-gray-100">
+    <nav class="navbar navbar-expand-lg bg-light shadow-sm border-bottom border-gray-100 fixed-top">
         <div class="container">
             <div class="d-flex align-items-center gap-3">
                 <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 32px; height: 32px; background-color: #0d6efd;">
@@ -90,7 +90,7 @@
         </div>
     </nav>
 
-    <div class="content-wrapper">
+     <div class="content-wrapper" style="padding-top: 80px;">
         <div class="container mt-4">
             @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show">

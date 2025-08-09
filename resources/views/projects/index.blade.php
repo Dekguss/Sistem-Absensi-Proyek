@@ -14,7 +14,7 @@
     </div>
 
 
-    <div class="bg-white rounded shadow-sm border overflow-hidden p-0">
+    <div class="bg-white rounded shadow-sm border overflow-hidden p-0 mb-3">
         <!-- Project List Header -->
         <div class="card-header bg-white border-bottom p-3">
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
