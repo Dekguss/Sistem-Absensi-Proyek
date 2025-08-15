@@ -16,5 +16,7 @@
     "env": {
       "APP_ENV": "production"
     }
-  }
+  },
+  "buildCommand": "npm run production",
+  "outputDirectory": "public"
 }
