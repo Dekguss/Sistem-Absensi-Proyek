@@ -1,0 +1,10 @@
+{
+  "orgId": "YOUR_ORG_ID",
+  "projectId": "YOUR_PROJECT_ID",
+  "settings": {
+    "buildCommand": "npm run production",
+    "outputDirectory": "public",
+    "framework": null,
+    "installCommand": "npm install"
+  }
+}

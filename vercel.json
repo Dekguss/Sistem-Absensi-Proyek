@@ -1,17 +1,17 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.php": {
-      "runtime": "vercel-php@0.6.0"
+  "builds": [
+    {
+      "src": "api/index.php",
+      "use": "@vercel/php@0.6.0"
     }
-  },
+  ],
   "routes": [
     { "src": "/(.*)", "dest": "/api/index.php" }
   ],
   "build": {
     "env": {
-      "APP_ENV": "production",
-      "NODE_VERSION": "16.x"
+      "APP_ENV": "production"
     }
   },
   "buildCommand": "npm install && npm run production",
