@@ -8,7 +8,7 @@
         "hot": "mix watch --hot",
         "prod": "npm run production",
         "production": "mix --production",
-        "build": "./build.sh"
+        "vercel-build": "chmod +x build.sh && ./build.sh"
     },
     "devDependencies": {
         "@popperjs/core": "^2.11.6",

@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "vercel-build.js",
+      "src": "build.sh",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "public"
@@ -11,14 +11,5 @@
   ],
   "routes": [
     { "src": "/(.*)", "dest": "/public/$1" }
-  ],
-  "build": {
-    "env": {
-      "APP_ENV": "production"
-    }
-  },
-  "buildCommand": "npm install && npm run production",
-  "installCommand": "npm install",
-  "framework": null,
-  "outputDirectory": "public"
+  ]
 }
