@@ -14,9 +14,12 @@
   ],
   "build": {
     "env": {
-      "APP_ENV": "production"
+      "APP_ENV": "production",
+      "NODE_VERSION": "16.x"
     }
   },
-  "buildCommand": "npm run production",
+  "buildCommand": "npm install && npm run production",
+  "installCommand": "npm install",
+  "framework": null,
   "outputDirectory": "public"
 }
